@@ -63,8 +63,8 @@ scripts/
 
 **校验**
 
-- 本地：`npm run validate`（校验清单、导出、locale、图标与工厂 id 一致性）。
-- 推送到 `main` 或提交 PR 时，GitHub Actions 会运行同样的校验与 JS 语法检查。
+- 本地：`npm run validate` 校验清单、导出、locale、图标与工厂 id 一致性。
+- `npm run check` 会同时跑清单校验与 JS 语法检查；`scripts/validate.mjs` 可直接接入任意 CI。
 - 新增插件：在 `packages/` 下新建目录，补齐清单、patch、locale 与图标，并加入上方表格。
 
 **分支**
