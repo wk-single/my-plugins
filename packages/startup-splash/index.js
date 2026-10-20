@@ -23,7 +23,7 @@ const PREBOOT_MARKUP = `
   <div class="pb-rays"></div>
   <div class="pb-glow"></div>
   <div class="pb-crit"></div>
-  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> SUPERNOVA BOOT <b>v3.0.0</b></div>
+  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> SUPERNOVA BOOT <b>v3.0.1</b></div>
   <div class="pb-hud pb-tr">T+<span id="pb-clock">00:00.000</span></div>
   <div class="pb-hud pb-bl">NODE <b>SHA-01</b> · <span id="pb-hex">0x000000</span></div>
   <div class="pb-hud pb-br"><span id="pb-phase">CHARGE</span> · SYNC</div>
@@ -109,7 +109,7 @@ const PREBOOT_BODY = `(function () {
   var root = document.getElementById('dsh-preboot');
   if (!root) return;
   var startedAt = performance.now();
-  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '3.0.0' };
+  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '3.0.1' };
 
   var CHARGE_END = 1500;
   var BOOM_AT = 2000;

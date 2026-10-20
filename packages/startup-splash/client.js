@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'dsh-startup-splash';
-    const VERSION = '3.0.0';
+    const VERSION = '3.0.1';
     const CHARGE_END = 1500;
     const BOOM_AT = 2000;
     const EXIT_AT = 3600;

@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+## [startup-splash 3.0.1] - 2026-10-20
+
+### Changed
+
+- 版本号更新为 3.0.1（HUD 与预启动层同步显示）；README 描述同步更新。
+
 ## [startup-splash 3.0.0] - 2026-10-20
 
 ### Added
