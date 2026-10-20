@@ -21,7 +21,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'dsh-startup-splash';
-    const VERSION = '2.0.0';
+    const VERSION = '2.1.0';
     const EXIT_AT = 3050;
     const LINGER = 980;
 
@@ -415,6 +415,26 @@ window.__ModuleLoader__.load({
 .dsh-splash-out .dsh-shock-3 { animation-delay: 180ms; }
 .dsh-splash-out .dsh-stage { animation: dsh-burst 700ms cubic-bezier(.3, .7, .2, 1) forwards; }
 
+.dsh-splash-continue .dsh-stage {
+  animation: none !important;
+  transform: translate(-50%, -50%);
+}
+.dsh-splash-continue .dsh-kicker,
+.dsh-splash-continue .dsh-line-1,
+.dsh-splash-continue .dsh-line-2,
+.dsh-splash-continue .dsh-sub,
+.dsh-splash-continue .dsh-meter,
+.dsh-splash-continue .dsh-hud-tl,
+.dsh-splash-continue .dsh-hud-tr,
+.dsh-splash-continue .dsh-hud-bl,
+.dsh-splash-continue .dsh-hud-br,
+.dsh-splash-continue .dsh-corner,
+.dsh-splash-continue .dsh-side,
+.dsh-splash-continue .dsh-skip {
+  animation: none !important;
+  opacity: 1;
+}
+
 .dsh-skip {
   position: absolute;
   bottom: 44px; left: 50%;
@@ -523,6 +543,17 @@ window.__ModuleLoader__.load({
           && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       } catch {
         return false;
+      }
+    }
+
+    /** Elapsed time inherited from the index-injected pre-boot splash. */
+    function prebootOffset() {
+      try {
+        const pre = window.__DSH_SPLASH_PREBOOT__;
+        if (!pre || typeof pre.startedAt !== 'number') return 0;
+        return Math.min(2900, Math.max(0, performance.now() - pre.startedAt));
+      } catch {
+        return 0;
       }
     }
 
@@ -748,8 +779,8 @@ window.__ModuleLoader__.load({
 
         measure();
         seed();
-        startedAt = performance.now();
-        last = startedAt;
+        startedAt = performance.now() - (props.offset > 0 ? props.offset : 0);
+        last = performance.now();
 
         if (reduced) {
           step(16, 1400);
@@ -775,18 +806,32 @@ window.__ModuleLoader__.load({
     function Splash(props) {
       const t = props.t;
       const reduced = React.useMemo(prefersReducedMotion, []);
+      const offset = React.useMemo(prebootOffset, []);
+      const continuing = offset > 0;
       const [phase, setPhase] = React.useState('in');
       const [alive, setAlive] = React.useState(true);
-      const [ro, setRo] = React.useState({ pct: 0, clock: '00:00.000', hex: '0x000000', hud: 'IGNITION', key: 'phaseCore' });
+      const [ro, setRo] = React.useState(() => {
+        const pct = percentAt(offset);
+        return {
+          pct,
+          clock: clockAt(offset),
+          hex: hexAt(offset),
+          hud: hudAt(offset, pct),
+          key: phaseKeyAt(offset, pct),
+        };
+      });
 
       const skip = React.useCallback(() => {
         setPhase('out');
       }, []);
 
       React.useEffect(() => {
-        const timer = window.setTimeout(() => setPhase('out'), reduced ? 1400 : EXIT_AT);
+        const timer = window.setTimeout(
+          () => setPhase('out'),
+          reduced ? 1400 : Math.max(0, EXIT_AT - offset),
+        );
         return () => window.clearTimeout(timer);
-      }, [reduced]);
+      }, [reduced, offset]);
 
       React.useEffect(() => {
         if (phase !== 'out') return undefined;
@@ -799,7 +844,7 @@ window.__ModuleLoader__.load({
           setRo({ pct: 100, clock: '00:01.400', hex: hexAt(1400), hud: 'READY', key: 'phaseReady' });
           return undefined;
         }
-        const startedAt = performance.now();
+        const startedAt = performance.now() - offset;
         const timer = window.setInterval(() => {
           const elapsed = performance.now() - startedAt;
           const pct = percentAt(elapsed);
@@ -825,14 +870,14 @@ window.__ModuleLoader__.load({
       if (!alive) return null;
 
       return h('div', {
-        className: 'dsh-splash' + (phase === 'out' ? ' dsh-splash-out' : ''),
+        className: 'dsh-splash' + (continuing ? ' dsh-splash-continue' : '') + (phase === 'out' ? ' dsh-splash-out' : ''),
         role: 'status',
         'aria-live': 'polite',
         'aria-label': t('loading'),
         onClick: skip,
       },
         h('style', { key: 'style' }, STYLE),
-        h(Warp, { key: 'warp' }),
+        h(Warp, { key: 'warp', offset }),
 
         h('div', { key: 'aurora-a', className: 'dsh-aurora dsh-aurora-a', 'aria-hidden': true }),
         h('div', { key: 'aurora-b', className: 'dsh-aurora dsh-aurora-b', 'aria-hidden': true }),

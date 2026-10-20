@@ -2,7 +2,7 @@
 
 > DeepSeek Harness 插件集合 · A collection of DeepSeek Harness plugins
 
-![Startup Splash v2.0.0](docs/splash.webp)
+![Startup Splash](docs/splash.webp)
 
 每个插件都是可独立安装的 Harness bundle，统一放在 [`packages/`](packages) 下，版本、变更记录与校验流程各自独立。
 
@@ -10,7 +10,7 @@
 
 | 插件 | 版本 | 说明 |
 | --- | --- | --- |
-| [Startup Splash](packages/startup-splash) | 2.0.0 | 全屏曲速隧道、粒子爆发、故障字标与 HUD 的电影感启动序列 |
+| [Startup Splash](packages/startup-splash) | 2.1.0 | 首帧即启动：预启动层 + 曲速隧道、粒子爆发、故障字标与 HUD |
 
 ## 安装
 

@@ -6,6 +6,19 @@
 
 ## [Unreleased]
 
+## [startup-splash 2.1.0] - 2026-10-20
+
+### Added
+
+- 预启动层：Host 半侧通过 `webServer.tapIndex` 把同一套深空画面注入 `index.html`，窗口第一帧就是启动动画，不再先闪白色「Loading plugins...」。
+- 预启动层记录起始时间，客户端 splash 接班后沿用同一条时间线（百分比、阶段、画布进度连续），并跳过入场动画。
+- 预启动层在真实 splash 挂载后自动移除，另有 15 秒安全兜底。
+
+### Changed
+
+- `index.js` 从空 `apply` 变为注册 index tap。
+- 版本号更新为 2.1.0（HUD 与预启动层同步显示）。
+
 ## [startup-splash 2.0.0] - 2026-10-20
 
 ### Added
