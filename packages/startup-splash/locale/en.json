@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Startup Splash",
+    "description": "Plays a branded startup loading animation when the Web UI opens, then fades away."
+  }
+}
