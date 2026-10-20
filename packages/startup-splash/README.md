@@ -2,6 +2,8 @@
 
 一个 Harness Web 界面插件：页面每次启动时先播放一段铺满整个视口的「Hyperdrive」启动序列，约 3 秒后爆闪淡出，把界面交还给应用。
 
+![Startup Splash v2.0.0](../../docs/splash.webp)
+
 ## 效果
 
 整屏都在动，不再是中间一小块：

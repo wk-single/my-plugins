@@ -2,7 +2,7 @@
 
 > DeepSeek Harness 插件集合 · A collection of DeepSeek Harness plugins
 
-![Startup Splash](docs/preview.svg)
+![Startup Splash v2.0.0](docs/splash.webp)
 
 每个插件都是可独立安装的 Harness bundle，统一放在 [`packages/`](packages) 下，版本、变更记录与校验流程各自独立。
 
@@ -42,7 +42,7 @@ packages/
     locale/             插件管理器显示文案（en / zh）
     icon.svg            插件图标
 docs/
-  preview.svg           仓库头图
+  splash.webp           实际启动画面截图（v2.0.0）
 scripts/
   validate.mjs          清单与结构校验
 ```
