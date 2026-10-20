@@ -10,7 +10,7 @@
 
 | 插件 | 版本 | 说明 |
 | --- | --- | --- |
-| [Startup Splash](packages/startup-splash) | 1.3.0 | 全屏曲速星场、极光光晕、能量核心与 HUD 的启动加载动画 |
+| [Startup Splash](packages/startup-splash) | 2.0.0 | 全屏曲速隧道、粒子爆发、故障字标与 HUD 的电影感启动序列 |
 
 ## 安装
 
@@ -44,7 +44,7 @@ packages/
 docs/
   preview.svg           仓库头图
 scripts/
-  validate.mjs          清单与结构校验（与 CI 相同）
+  validate.mjs          清单与结构校验
 ```
 
 ## 开发约定
@@ -52,7 +52,7 @@ scripts/
 **版本**
 
 - 每个插件独立遵循 [SemVer](https://semver.org/)；破坏性变更升主版本。
-- 发布时打 tag：`<plugin>-v<version>`，例如 `startup-splash-v1.3.0`。
+- 发布时打 tag：`<plugin>-v<version>`，例如 `startup-splash-v2.0.0`。
 - 变更写入根目录 [CHANGELOG.md](CHANGELOG.md)（Keep a Changelog 格式）。
 
 **提交**
