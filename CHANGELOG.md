@@ -6,6 +6,18 @@
 
 ## [Unreleased]
 
+## [startup-splash 3.0.0] - 2026-10-20
+
+### Added
+
+- 全新「Supernova」启动序列：奇点充能（汇聚光线 + 电弧）、临界过载（白热核、红色过载 vignette、画面震颤）、detonation 爆闪（白闪、震屏、430 块碎片、三重冲击波、火球与神光束）、字标砸场与超空间跃迁退场。
+- 预启动层与客户端共用同一条百分比曲线与相位时间轴；客户端读取 `window.__DSH_SPLASH_PREBOOT__` 延续播放，首帧不重置。
+
+### Changed
+
+- 替换「Hyperdrive」曲速隧道序列为超新星时间轴；启动阶段精简为 4 段文案 + 跃迁。
+- 版本号更新为 3.0.0（HUD 与预启动层同步显示）；README、图标与 locale 描述同步更新。
+
 ## [startup-splash 2.1.1] - 2026-10-20
 
 ### Fixed

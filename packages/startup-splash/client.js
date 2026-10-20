@@ -1,18 +1,29 @@
 /**
- * Client half of the DeepSeek Harness startup splash — v2 "Hyperdrive".
+ * Client half of the DeepSeek Harness startup splash — v3 "Supernova".
  *
  * A frame-wide, one-shot cinematic boot sequence rendered into `shell.overlay`:
- * a canvas hyperspace tunnel with hundreds of accelerating streaks, a particle
- * burst on exit, aurora fields, an anamorphic lens flare, a HUD frame, and a
- * huge glitching wordmark with a live boot readout.
+ *   0.0–1.5s  IGNITION   hundreds of streaks converge into a growing singularity
+ *                        core while lightning arcs snap around it;
+ *   1.5–2.0s  CRITICAL   the core goes white-hot, convergence triples, a red
+ *                        overload vignette pulses and the frame starts to rumble;
+ *   2.0s      DETONATION full-screen flash, violent screen quake, 400+ debris
+ *                        fragments, three shockwave rings, a fireball and god rays;
+ *   2.0–2.6s  SLAM       the DEEPSEEK / HARNESS wordmark slams out of the blast
+ *                        with blur-settle, impact shake and RGB glitch bursts;
+ *   2.6–3.6s  STABILIZE  embers drift through the afterglow, readout hits 100%;
+ *   3.6s      JUMP       everything stretches into hyperspace streaks and the
+ *                        overlay flashes and fades away for good.
  *
  * Design notes:
  * - The backdrop is intentionally theme-independent dark: the sequence is a
  *   film, not a themed surface, so it looks the same in light and dark UI.
- * - One canvas draws plain lines and dots (no shadows, filters or gradients per
- *   particle) and the CSS layers are transform/opacity only, so it stays cheap.
+ * - One canvas draws plain lines, dots and at most one radial gradient per
+ *   frame (no shadows, filters or per-particle gradients); the CSS layers are
+ *   transform/opacity only, so it stays cheap.
  * - Everything is owned by the component: unmount cancels the frame loop and
  *   removes the styles. Click / Escape skips.
+ * - The Host half paints a pre-boot copy of the same timeline; this half reads
+ *   `window.__DSH_SPLASH_PREBOOT__` and continues it instead of restarting.
  */
 window.__ModuleLoader__.load({
   id: '@local/dsh-startup-splash',
@@ -21,29 +32,31 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'dsh-startup-splash';
-    const VERSION = '2.1.1';
-    const EXIT_AT = 3050;
+    const VERSION = '3.0.0';
+    const CHARGE_END = 1500;
+    const BOOM_AT = 2000;
+    const EXIT_AT = 3600;
     const LINGER = 980;
 
     const EN = {
       loading: 'Loading DeepSeek Harness',
-      kicker: 'System online',
-      sub: 'Hyperspace boot sequence',
-      phaseCore: 'Initializing core',
-      phaseOptics: 'Calibrating optics',
-      phaseLink: 'Linking modules',
-      phaseReady: 'Hyperspace ready',
+      kicker: 'Singularity online',
+      sub: 'Supernova boot sequence',
+      phaseCore: 'Charging singularity',
+      phaseCrit: 'Critical overload',
+      phaseBoom: 'Detonation',
+      phaseOnline: 'System online',
       phaseJump: 'Jumping to hyperspace',
       skip: 'Click / Esc to skip',
     };
     const ZH = {
       loading: '正在加载 DeepSeek Harness',
-      kicker: '系统在线',
-      sub: '超空间启动序列',
-      phaseCore: '初始化核心',
-      phaseOptics: '校准光学',
-      phaseLink: '链接模块',
-      phaseReady: '超空间就绪',
+      kicker: '奇点在线',
+      sub: '超新星启动序列',
+      phaseCore: '奇点充能',
+      phaseCrit: '临界过载',
+      phaseBoom: '聚变爆发',
+      phaseOnline: '系统在线',
       phaseJump: '跃迁至超空间',
       skip: '点击 / Esc 跳过',
     };
@@ -70,6 +83,16 @@ window.__ModuleLoader__.load({
   animation: dsh-fade-out 620ms cubic-bezier(.4, 0, .2, 1) 240ms forwards;
 }
 
+.dsh-frame {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.dsh-splash-boom .dsh-frame {
+  animation: dsh-quake 640ms cubic-bezier(.36, .07, .19, .97) both;
+}
+.dsh-splash-boomdone .dsh-frame { animation: none; }
+
 .dsh-splash-canvas {
   position: absolute;
   inset: 0;
@@ -87,17 +110,17 @@ window.__ModuleLoader__.load({
 }
 .dsh-aurora-a {
   width: 120vmax; height: 86vmax; left: -40vmax; top: -36vmax;
-  background: radial-gradient(closest-side, rgba(70, 104, 255, .40) 0%, rgba(70, 104, 255, 0) 70%);
+  background: radial-gradient(closest-side, rgba(70, 104, 255, .34) 0%, rgba(70, 104, 255, 0) 70%);
   animation: dsh-drift-a 10s ease-in-out infinite alternate;
 }
 .dsh-aurora-b {
   width: 110vmax; height: 92vmax; right: -42vmax; top: -10vmax;
-  background: radial-gradient(closest-side, rgba(160, 107, 255, .38) 0%, rgba(160, 107, 255, 0) 70%);
+  background: radial-gradient(closest-side, rgba(160, 107, 255, .32) 0%, rgba(160, 107, 255, 0) 70%);
   animation: dsh-drift-b 13s ease-in-out infinite alternate;
 }
 .dsh-aurora-c {
   width: 104vmax; height: 78vmax; left: 6vmax; bottom: -40vmax;
-  background: radial-gradient(closest-side, rgba(53, 230, 255, .30) 0%, rgba(53, 230, 255, 0) 70%);
+  background: radial-gradient(closest-side, rgba(53, 230, 255, .26) 0%, rgba(53, 230, 255, 0) 70%);
   animation: dsh-drift-c 9s ease-in-out infinite alternate;
 }
 
@@ -107,7 +130,7 @@ window.__ModuleLoader__.load({
   width: 160vmax; height: 160vmax;
   margin: -80vmax 0 0 -80vmax;
   pointer-events: none;
-  opacity: .34;
+  opacity: .22;
   background: repeating-conic-gradient(from 0deg,
     rgba(150, 190, 255, .16) 0deg 1deg,
     transparent 1deg 14deg);
@@ -129,6 +152,19 @@ window.__ModuleLoader__.load({
   animation: dsh-glow-pulse 2600ms ease-in-out infinite alternate;
 }
 
+.dsh-crit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(118% 92% at 50% 46%,
+    transparent 42%,
+    rgba(255, 62, 120, .16) 74%,
+    rgba(255, 92, 60, .34) 100%);
+  mix-blend-mode: screen;
+}
+.dsh-splash-crit .dsh-crit { animation: dsh-crit 420ms ease-in-out infinite; }
+
 .dsh-flare,
 .dsh-flare-v {
   position: absolute;
@@ -148,15 +184,17 @@ window.__ModuleLoader__.load({
     rgba(120, 160, 255, .5) 74%,
     transparent 100%);
   filter: blur(.6px);
-  animation: dsh-flare 2800ms cubic-bezier(.2, .7, .2, 1) 650ms both;
 }
 .dsh-flare-v {
   width: 1px;
   height: min(46vh, 460px);
   transform: translate(-50%, -50%) scaleY(.12);
   background: linear-gradient(180deg, transparent 0%, rgba(150, 200, 255, .5) 40%, rgba(255, 255, 255, .85) 50%, rgba(120, 160, 255, .35) 62%, transparent 100%);
-  animation: dsh-flare-v 2800ms cubic-bezier(.2, .7, .2, 1) 650ms both;
 }
+.dsh-splash-boom .dsh-flare { animation: dsh-flare 2400ms cubic-bezier(.2, .7, .2, 1) 120ms both; }
+.dsh-splash-boom .dsh-flare-v { animation: dsh-flare-v 2400ms cubic-bezier(.2, .7, .2, 1) 120ms both; }
+.dsh-splash-boomdone .dsh-flare,
+.dsh-splash-boomdone .dsh-flare-v { animation: none; opacity: 0; }
 
 .dsh-stage {
   position: absolute;
@@ -167,8 +205,14 @@ window.__ModuleLoader__.load({
   align-items: center;
   text-align: center;
   width: min(92vw, 1100px);
-  animation: dsh-shake-in 1.1s cubic-bezier(.22, 1, .36, 1) both;
   will-change: transform;
+}
+.dsh-splash-boom .dsh-stage {
+  animation: dsh-impact 460ms cubic-bezier(.36, .07, .19, .97) 80ms both;
+}
+.dsh-splash-boomdone .dsh-stage {
+  animation: none;
+  transform: translate(-50%, -50%);
 }
 
 .dsh-kicker {
@@ -189,6 +233,7 @@ window.__ModuleLoader__.load({
   box-shadow: 0 0 12px 2px rgba(53, 230, 255, .85);
   animation: dsh-blink 900ms steps(2, jump-none) infinite;
 }
+.dsh-splash-crit .dsh-kicker i { background: #ff5c7a; box-shadow: 0 0 12px 2px rgba(255, 92, 122, .9); }
 
 .dsh-title {
   position: relative;
@@ -202,6 +247,7 @@ window.__ModuleLoader__.load({
   position: relative;
   font-size: clamp(52px, 9.2vw, 126px);
   line-height: .92;
+  opacity: 0;
 }
 .dsh-line-1 {
   background: linear-gradient(180deg, #ffffff 0%, #dbe7ff 34%, #8fb0ff 66%, #4d6bfe 100%);
@@ -209,7 +255,6 @@ window.__ModuleLoader__.load({
   background-clip: text;
   color: transparent;
   filter: drop-shadow(0 0 26px rgba(77, 107, 254, .38));
-  animation: dsh-line-in 900ms cubic-bezier(.16, 1, .3, 1) 260ms both;
 }
 .dsh-line-2 {
   color: transparent;
@@ -218,8 +263,17 @@ window.__ModuleLoader__.load({
   -webkit-background-clip: text;
   background-clip: text;
   text-shadow: 0 0 36px rgba(53, 230, 255, .22);
-  animation: dsh-line-in 900ms cubic-bezier(.16, 1, .3, 1) 420ms both;
 }
+.dsh-splash-boom .dsh-line-1 { animation: dsh-slam 680ms cubic-bezier(.16, 1, .3, 1) 40ms both; }
+.dsh-splash-boom .dsh-line-2 { animation: dsh-slam 680ms cubic-bezier(.16, 1, .3, 1) 150ms both; }
+.dsh-splash-boomdone .dsh-line-1,
+.dsh-splash-boomdone .dsh-line-2 {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.dsh-splash-boomdone .dsh-line-1 { filter: drop-shadow(0 0 26px rgba(77, 107, 254, .38)); }
 .dsh-line-1::after,
 .dsh-line-2::after {
   content: attr(data-text);
@@ -230,8 +284,10 @@ window.__ModuleLoader__.load({
   mix-blend-mode: screen;
   pointer-events: none;
 }
-.dsh-line-1::after { animation: dsh-glitch 900ms steps(2, jump-none) 1400ms 2; }
-.dsh-line-2::after { animation: dsh-glitch 900ms steps(2, jump-none) 1550ms 2; color: #ff3ea5; }
+.dsh-splash-boom .dsh-line-1::after { animation: dsh-glitch 900ms steps(2, jump-none) 640ms 2; }
+.dsh-splash-boom .dsh-line-2::after { animation: dsh-glitch 900ms steps(2, jump-none) 780ms 2; color: #ff3ea5; }
+.dsh-splash-boomdone .dsh-line-1::after,
+.dsh-splash-boomdone .dsh-line-2::after { animation: none; }
 
 .dsh-sub {
   margin-top: clamp(14px, 2.2vh, 24px);
@@ -259,6 +315,7 @@ window.__ModuleLoader__.load({
   text-transform: uppercase;
   color: rgba(176, 200, 245, .82);
 }
+.dsh-splash-crit .dsh-meter-row { color: rgba(255, 168, 190, .9); }
 .dsh-pct {
   font-size: clamp(15px, 1.8vw, 22px);
   letter-spacing: .04em;
@@ -407,31 +464,28 @@ window.__ModuleLoader__.load({
   will-change: transform, opacity;
 }
 .dsh-shock-2 { border-color: rgba(53, 230, 255, .65); border-width: 3px; }
-.dsh-shock-3 { border-color: rgba(160, 107, 255, .5); border-width: 1px; }
+.dsh-shock-3 { border-color: rgba(255, 62, 165, .5); border-width: 1px; }
 
-.dsh-splash-out .dsh-flash { animation: dsh-flash 700ms ease-out forwards; }
-.dsh-splash-out .dsh-shock { animation: dsh-shock 900ms cubic-bezier(.16, .8, .24, 1) forwards; }
-.dsh-splash-out .dsh-shock-2 { animation-delay: 90ms; }
-.dsh-splash-out .dsh-shock-3 { animation-delay: 180ms; }
+.dsh-splash-boom .dsh-flash { animation: dsh-flash 760ms ease-out both; }
+.dsh-splash-boom .dsh-shock { animation: dsh-shock 950ms cubic-bezier(.16, .8, .24, 1) both; }
+.dsh-splash-boom .dsh-shock-2 { animation-delay: 90ms; }
+.dsh-splash-boom .dsh-shock-3 { animation-delay: 180ms; }
+.dsh-splash-boomdone .dsh-flash,
+.dsh-splash-boomdone .dsh-shock { animation: none; opacity: 0; }
+
 .dsh-splash-out .dsh-stage { animation: dsh-burst 700ms cubic-bezier(.3, .7, .2, 1) forwards; }
 
-.dsh-splash-continue .dsh-stage {
-  animation: none !important;
-  transform: translate(-50%, -50%);
-}
-.dsh-splash-continue .dsh-kicker,
-.dsh-splash-continue .dsh-line-1,
-.dsh-splash-continue .dsh-line-2,
-.dsh-splash-continue .dsh-sub,
-.dsh-splash-continue .dsh-meter,
-.dsh-splash-continue .dsh-hud-tl,
-.dsh-splash-continue .dsh-hud-tr,
-.dsh-splash-continue .dsh-hud-bl,
-.dsh-splash-continue .dsh-hud-br,
-.dsh-splash-continue .dsh-corner,
-.dsh-splash-continue .dsh-side,
-.dsh-splash-continue .dsh-skip {
-  animation: none !important;
+.dsh-splash-late .dsh-kicker,
+.dsh-splash-late .dsh-sub,
+.dsh-splash-late .dsh-meter,
+.dsh-splash-late .dsh-hud-tl,
+.dsh-splash-late .dsh-hud-tr,
+.dsh-splash-late .dsh-hud-bl,
+.dsh-splash-late .dsh-hud-br,
+.dsh-splash-late .dsh-corner,
+.dsh-splash-late .dsh-side,
+.dsh-splash-late .dsh-skip {
+  animation: none;
   opacity: 1;
 }
 
@@ -463,6 +517,32 @@ window.__ModuleLoader__.load({
   from { opacity: .55; transform: translate(-50%, -50%) scale(.94); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
 }
+@keyframes dsh-crit {
+  0%, 100% { opacity: .35; }
+  50% { opacity: .95; }
+}
+@keyframes dsh-quake {
+  0% { transform: translate(0, 0); }
+  12% { transform: translate(-13px, 8px) scale(1.012); }
+  24% { transform: translate(11px, -7px); }
+  38% { transform: translate(-8px, -5px) scale(1.006); }
+  52% { transform: translate(6px, 4px); }
+  68% { transform: translate(-4px, 2px); }
+  84% { transform: translate(2px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes dsh-impact {
+  0% { transform: translate(-50%, -50%) scale(1.05); }
+  30% { transform: translate(calc(-50% + 5px), calc(-50% - 3px)) scale(1.012); }
+  60% { transform: translate(calc(-50% - 3px), calc(-50% + 2px)) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes dsh-slam {
+  0% { opacity: 0; transform: scale(2.6); filter: blur(18px); }
+  55% { opacity: 1; filter: blur(0); }
+  72% { transform: scale(.985); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
 @keyframes dsh-flare {
   0% { opacity: 0; transform: translate(-50%, -50%) scaleX(.12); }
   20% { opacity: .95; transform: translate(-50%, -50%) scaleX(1); }
@@ -479,11 +559,6 @@ window.__ModuleLoader__.load({
 @keyframes dsh-drift-a { from { transform: translate3d(-4vmax, -3vmax, 0) scale(1); } to { transform: translate3d(8vmax, 6vmax, 0) scale(1.18); } }
 @keyframes dsh-drift-b { from { transform: translate3d(4vmax, 4vmax, 0) scale(1.12); } to { transform: translate3d(-8vmax, -5vmax, 0) scale(.94); } }
 @keyframes dsh-drift-c { from { transform: translate3d(-3vmax, 5vmax, 0) scale(.96); } to { transform: translate3d(7vmax, -6vmax, 0) scale(1.2); } }
-@keyframes dsh-line-in {
-  0% { opacity: 0; transform: translateY(26px) scale(.96); filter: blur(10px); }
-  55% { opacity: 1; filter: blur(0); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-}
 @keyframes dsh-glitch {
   0% { opacity: 0; transform: translate(0, 0); clip-path: inset(0 0 100% 0); }
   12% { opacity: .9; transform: translate(-7px, 2px); clip-path: inset(12% 0 58% 0); }
@@ -491,17 +566,9 @@ window.__ModuleLoader__.load({
   36% { opacity: 0; transform: translate(0, 0); clip-path: inset(0 0 100% 0); }
   100% { opacity: 0; }
 }
-@keyframes dsh-shake-in {
-  0% { transform: translate(-50%, -50%) scale(.965); }
-  18% { transform: translate(calc(-50% + 7px), calc(-50% - 4px)) scale(.985); }
-  34% { transform: translate(calc(-50% - 6px), calc(-50% + 3px)); }
-  52% { transform: translate(calc(-50% + 4px), calc(-50% + 2px)); }
-  70% { transform: translate(calc(-50% - 2px), calc(-50% - 1px)); }
-  100% { transform: translate(-50%, -50%) scale(1); }
-}
 @keyframes dsh-flash {
   0% { opacity: 0; }
-  18% { opacity: .95; }
+  14% { opacity: 1; }
   100% { opacity: 0; }
 }
 @keyframes dsh-shock {
@@ -525,6 +592,7 @@ window.__ModuleLoader__.load({
     transition-duration: 200ms !important;
   }
   .dsh-scan { display: none; }
+  .dsh-crit { display: none; }
   .dsh-skip { opacity: 1; }
 }
 `;
@@ -535,6 +603,7 @@ window.__ModuleLoader__.load({
       [168, 124, 255],
       [255, 96, 180],
       [235, 244, 255],
+      [255, 186, 110],
     ];
 
     function prefersReducedMotion() {
@@ -551,7 +620,7 @@ window.__ModuleLoader__.load({
       try {
         const pre = window.__DSH_SPLASH_PREBOOT__;
         if (!pre || typeof pre.startedAt !== 'number') return 0;
-        return Math.min(2900, Math.max(0, performance.now() - pre.startedAt));
+        return Math.min(3400, Math.max(0, performance.now() - pre.startedAt));
       } catch {
         return 0;
       }
@@ -563,29 +632,37 @@ window.__ModuleLoader__.load({
       return x * x * (3 - 2 * x);
     };
 
+    /** Shared with the pre-boot layer: identical curve on both halves. */
     function percentAt(t) {
-      const p = clamp((t - 420) / 2380, 0, 1);
-      let eased = 1 - Math.pow(1 - p, 2.6);
-      if (eased > 0.17 && eased < 0.24) eased = 0.19;
-      if (eased > 0.52 && eased < 0.60) eased = 0.55;
-      if (eased > 0.81 && eased < 0.88) eased = 0.83;
-      return Math.min(100, Math.round(eased * 100));
+      if (t >= BOOM_AT) return 100;
+      if (t >= CHARGE_END) {
+        const p = (t - CHARGE_END) / (BOOM_AT - CHARGE_END);
+        let v = 62 + 35 * (1 - Math.pow(1 - p, 1.6));
+        if (v > 78 && v < 84) v = 80;
+        if (v > 90 && v < 95) v = 93;
+        return Math.min(99, Math.round(v));
+      }
+      const p = clamp(t / CHARGE_END, 0, 1);
+      let v = 62 * (1 - Math.pow(1 - p, 2.2));
+      if (v > 17 && v < 23) v = 19;
+      if (v > 41 && v < 47) v = 44;
+      return Math.round(v);
     }
 
-    function phaseKeyAt(t, pct) {
+    function phaseKeyAt(t) {
       if (t >= EXIT_AT) return 'phaseJump';
-      if (pct >= 92) return 'phaseReady';
-      if (pct >= 58) return 'phaseLink';
-      if (pct >= 26) return 'phaseOptics';
+      if (t >= BOOM_AT + 600) return 'phaseOnline';
+      if (t >= BOOM_AT) return 'phaseBoom';
+      if (t >= CHARGE_END) return 'phaseCrit';
       return 'phaseCore';
     }
 
-    function hudAt(t, pct) {
+    function hudAt(t) {
       if (t >= EXIT_AT) return 'JUMP';
-      if (pct >= 92) return 'READY';
-      if (pct >= 58) return 'LINK';
-      if (pct >= 26) return 'OPTICS';
-      return 'IGNITION';
+      if (t >= BOOM_AT + 600) return 'ONLINE';
+      if (t >= BOOM_AT) return 'DETONATE';
+      if (t >= CHARGE_END) return 'CRITICAL';
+      return 'CHARGE';
     }
 
     function clockAt(t) {
@@ -598,8 +675,21 @@ window.__ModuleLoader__.load({
       return '0x' + ((t * 2654435761) >>> 0).toString(16).slice(0, 6).toUpperCase();
     }
 
-    /** Full-viewport hyperspace tunnel with an exit particle burst. */
-    function Warp(props) {
+    function readoutAt(t) {
+      return {
+        pct: percentAt(t),
+        clock: clockAt(t),
+        hex: hexAt(t),
+        hud: hudAt(t),
+        key: phaseKeyAt(t),
+      };
+    }
+
+    /**
+     * Full-viewport canvas: converging singularity, lightning arcs, detonation
+     * debris, shockwaves, embers and the exit hyperspace stretch.
+     */
+    function Supernova(props) {
       const canvasRef = React.useRef(null);
 
       React.useEffect(() => {
@@ -609,9 +699,15 @@ window.__ModuleLoader__.load({
         if (!g) return undefined;
 
         const reduced = prefersReducedMotion();
-        const stars = [];
-        const sparks = [];
-        let sparksBorn = false;
+        const conv = [];
+        const arcs = [];
+        const debris = [];
+        const embers = [];
+        const jump = [];
+        let debrisBorn = false;
+        let embersBorn = false;
+        let jumpBorn = false;
+        let arcTimer = 0;
         let W = 0;
         let H = 0;
         let CX = 0;
@@ -636,124 +732,304 @@ window.__ModuleLoader__.load({
         };
 
         const seed = () => {
-          stars.length = 0;
-          const count = Math.round(Math.min(420, Math.max(180, (W * H) / 5200)));
+          conv.length = 0;
+          const count = Math.round(Math.min(380, Math.max(170, (W * H) / 5400)));
           for (let i = 0; i < count; i += 1) {
-            stars.push({
+            conv.push({
               a: Math.random() * Math.PI * 2,
-              r: Math.random() * MAXR,
-              v: 0.006 + Math.random() * 0.030,
-              w: 0.6 + Math.random() * 2.1,
+              r: 30 + Math.random() * MAXR,
+              v: 0.12 + Math.random() * 0.35,
+              w: 0.6 + Math.random() * 2.0,
               c: PALETTE[(Math.random() * PALETTE.length) | 0],
               p: Math.random() * Math.PI * 2,
             });
           }
         };
 
-        const step = (dt, t) => {
-          const ramp = smooth(500, 2700, t);
-          const boost = 1 + ramp * 5.4;
-          for (let i = 0; i < stars.length; i += 1) {
-            const s = stars[i];
-            s.r += s.v * dt * boost * (0.35 + (s.r / MAXR) * 2.1);
-            s.a += 0.00010 * dt * (0.5 + s.r / MAXR);
-            if (s.r > MAXR) {
-              s.r = 4 + Math.random() * 26;
-              s.a = Math.random() * Math.PI * 2;
-            }
+        const coreRadius = (t) => {
+          let r = 5 + 22 * smooth(0, CHARGE_END, t);
+          if (t >= CHARGE_END && t < BOOM_AT) {
+            r += 3 + Math.sin(t * 0.09) * 2 + Math.sin(t * 0.161) * 1.6;
           }
-          if (t >= EXIT_AT && !sparksBorn) {
-            sparksBorn = true;
-            for (let i = 0; i < 150; i += 1) {
+          return r;
+        };
+
+        const step = (dt, t) => {
+          if (t < BOOM_AT) {
+            const mult = 1 + smooth(0, CHARGE_END, t) * 0.8 + smooth(CHARGE_END, BOOM_AT, t) * 2.2;
+            const core = coreRadius(t);
+            for (let i = 0; i < conv.length; i += 1) {
+              const s = conv[i];
+              s.r -= s.v * dt * mult;
+              s.a += 0.00016 * dt * (0.4 + s.r / MAXR);
+              if (s.r < core + 6) {
+                s.r = MAXR * (0.72 + Math.random() * 0.38);
+                s.a = Math.random() * Math.PI * 2;
+              }
+            }
+            arcTimer += dt;
+            const gap = 170 - smooth(CHARGE_END, BOOM_AT, t) * 105;
+            if (t > 500 && arcTimer > gap) {
+              arcTimer = 0;
+              let ang = Math.random() * Math.PI * 2;
+              let rad = core + 6;
+              const pts = [[CX + Math.cos(ang) * rad, CY + Math.sin(ang) * rad]];
+              const segs = 4 + ((Math.random() * 3) | 0);
+              for (let k = 0; k < segs; k += 1) {
+                ang += (Math.random() - 0.5) * 1.1;
+                rad += 7 + Math.random() * 16;
+                pts.push([CX + Math.cos(ang) * rad, CY + Math.sin(ang) * rad]);
+              }
+              arcs.push({ pts, born: t });
+            }
+            for (let i = arcs.length - 1; i >= 0; i -= 1) {
+              if (t - arcs[i].born > 170) arcs.splice(i, 1);
+            }
+            return;
+          }
+
+          const e = t - BOOM_AT;
+          if (!debrisBorn) {
+            debrisBorn = true;
+            for (let i = 0; i < 430; i += 1) {
               const ang = Math.random() * Math.PI * 2;
-              const sp = 0.4 + Math.random() * 2.6;
-              sparks.push({
+              const fast = i % 11 === 0;
+              const sp = fast
+                ? 2.6 + Math.random() * 1.9
+                : 0.25 + Math.pow(Math.random(), 1.6) * 2.2;
+              debris.push({
                 x: CX,
                 y: CY,
                 vx: Math.cos(ang) * sp,
                 vy: Math.sin(ang) * sp,
-                life: 0.5 + Math.random() * 0.6,
-                w: 0.7 + Math.random() * 1.8,
+                life: 700 + Math.random() * 1100,
+                w: fast ? 1.6 + Math.random() * 1.6 : 0.7 + Math.random() * 1.5,
                 c: PALETTE[(Math.random() * PALETTE.length) | 0],
               });
             }
           }
-          for (let i = sparks.length - 1; i >= 0; i -= 1) {
-            const p = sparks[i];
-            p.x += p.vx * dt * 0.9;
-            p.y += p.vy * dt * 0.9;
-            p.vx *= 0.992;
-            p.vy *= 0.992;
-            p.life -= dt / 900;
-            if (p.life <= 0) sparks.splice(i, 1);
+          const drag = 1 - 0.012 * (dt / 16.7);
+          for (let i = debris.length - 1; i >= 0; i -= 1) {
+            const p = debris[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vx *= drag;
+            p.vy *= drag;
+            p.life -= dt;
+            if (p.life <= 0) debris.splice(i, 1);
+          }
+          if (!embersBorn && e > 160) {
+            embersBorn = true;
+            for (let i = 0; i < 90; i += 1) {
+              embers.push({
+                x: CX + (Math.random() - 0.5) * W * 0.72,
+                y: CY + (Math.random() - 0.5) * H * 0.62,
+                vx: (Math.random() - 0.5) * 0.05,
+                vy: (Math.random() - 0.5) * 0.04 + 0.016,
+                life: 2600 + Math.random() * 1400,
+                w: 0.8 + Math.random() * 1.6,
+                c: PALETTE[(Math.random() * PALETTE.length) | 0],
+                p: Math.random() * Math.PI * 2,
+              });
+            }
+          }
+          for (let i = embers.length - 1; i >= 0; i -= 1) {
+            const p = embers[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.life -= dt;
+            if (p.life <= 0) embers.splice(i, 1);
+          }
+          if (t >= EXIT_AT) {
+            if (!jumpBorn) {
+              jumpBorn = true;
+              for (let i = 0; i < 240; i += 1) {
+                jump.push({
+                  a: Math.random() * Math.PI * 2,
+                  r: 8 + Math.random() * MAXR * 0.35,
+                  v: 0.5 + Math.random() * 1.5,
+                  w: 0.6 + Math.random() * 2.0,
+                  c: PALETTE[(Math.random() * PALETTE.length) | 0],
+                });
+              }
+            }
+            const ramp = 1 + smooth(EXIT_AT, EXIT_AT + 450, t) * 9;
+            for (let i = 0; i < jump.length; i += 1) {
+              const s = jump[i];
+              s.r += s.v * dt * ramp * (0.4 + (s.r / MAXR) * 2.2);
+            }
           }
         };
 
         const paint = (t, dt) => {
-          const ramp = smooth(500, 2700, t);
-          const boost = 1 + ramp * 5.4;
           g.clearRect(0, 0, W, H);
           g.globalCompositeOperation = 'lighter';
           g.lineCap = 'round';
 
-          if (t < EXIT_AT) {
-            for (let k = 0; k < 4; k += 1) {
-              const phase = (t * 0.00036 + k * 0.25) % 1;
-              const rr = 40 + phase * MAXR * 1.35;
-              g.strokeStyle = 'rgba(120,170,255,' + (0.16 * (1 - phase)).toFixed(3) + ')';
-              g.lineWidth = 1 + (1 - phase) * 2.4;
+          if (t < BOOM_AT) {
+            const core = coreRadius(t);
+            const crit = smooth(CHARGE_END, BOOM_AT, t);
+
+            for (let k = 0; k < 3; k += 1) {
+              const phase = (t * 0.00030 + k / 3) % 1;
+              const rr = core + (MAXR * 0.92) * (1 - phase);
+              g.strokeStyle = 'rgba(120,170,255,' + (0.05 + phase * 0.30).toFixed(3) + ')';
+              g.lineWidth = 1 + phase * 1.6;
               g.beginPath();
               g.arc(CX, CY, rr, 0, Math.PI * 2);
               g.stroke();
             }
-          }
 
-          for (let i = 0; i < stars.length; i += 1) {
-            const s = stars[i];
-            const len = 5 + (s.v * dt * boost * 7) + (s.r / MAXR) * 120 * (0.35 + ramp);
-            const r0 = Math.max(1, s.r - len);
-            const ca = Math.cos(s.a);
-            const sa = Math.sin(s.a);
-            const fade = clamp(s.r / MAXR, 0, 1);
-            const alpha = (0.10 + fade * 0.78) * (0.75 + 0.25 * Math.sin(s.p + t * 0.004));
-            g.strokeStyle = 'rgba(' + s.c[0] + ',' + s.c[1] + ',' + s.c[2] + ',' + alpha.toFixed(3) + ')';
-            g.lineWidth = s.w;
-            g.beginPath();
-            g.moveTo(CX + ca * r0, CY + sa * r0);
-            g.lineTo(CX + ca * s.r, CY + sa * s.r);
-            g.stroke();
-            if (s.w > 2.1) {
-              g.fillStyle = 'rgba(' + s.c[0] + ',' + s.c[1] + ',' + s.c[2] + ',' + (alpha * 0.8).toFixed(3) + ')';
+            for (let i = 0; i < conv.length; i += 1) {
+              const s = conv[i];
+              const near = 1 - clamp(s.r / MAXR, 0, 1);
+              const len = 8 + s.v * dt * 6 + near * 46;
+              const r1 = s.r + len;
+              const ca = Math.cos(s.a);
+              const sa = Math.sin(s.a);
+              const alpha = (0.14 + near * 0.74) * (0.78 + 0.22 * Math.sin(s.p + t * 0.004));
+              g.strokeStyle = 'rgba(' + s.c[0] + ',' + s.c[1] + ',' + s.c[2] + ',' + alpha.toFixed(3) + ')';
+              g.lineWidth = s.w;
               g.beginPath();
-              g.arc(CX + ca * s.r, CY + sa * s.r, s.w * 1.3, 0, Math.PI * 2);
-              g.fill();
+              g.moveTo(CX + ca * s.r, CY + sa * s.r);
+              g.lineTo(CX + ca * r1, CY + sa * r1);
+              g.stroke();
             }
-          }
 
-          for (let i = 0; i < sparks.length; i += 1) {
-            const p = sparks[i];
-            g.strokeStyle = 'rgba(' + p.c[0] + ',' + p.c[1] + ',' + p.c[2] + ',' + clamp(p.life, 0, 1).toFixed(3) + ')';
-            g.lineWidth = p.w;
+            for (let i = 0; i < arcs.length; i += 1) {
+              const arc = arcs[i];
+              const a = clamp(1 - (t - arc.born) / 170, 0, 1);
+              g.strokeStyle = 'rgba(190,235,255,' + (a * 0.85).toFixed(3) + ')';
+              g.lineWidth = 1.2;
+              g.beginPath();
+              g.moveTo(arc.pts[0][0], arc.pts[0][1]);
+              for (let k = 1; k < arc.pts.length; k += 1) {
+                g.lineTo(arc.pts[k][0], arc.pts[k][1]);
+              }
+              g.stroke();
+            }
+
+            const flick = t >= CHARGE_END ? 0.72 + 0.28 * Math.abs(Math.sin(t * 0.045) * Math.sin(t * 0.013)) : 1;
+            g.fillStyle = 'rgba(77,107,254,' + (0.16 * flick).toFixed(3) + ')';
             g.beginPath();
-            g.moveTo(p.x - p.vx * 14, p.y - p.vy * 14);
-            g.lineTo(p.x, p.y);
+            g.arc(CX, CY, core * 3.4, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = 'rgba(140,210,255,' + (0.34 * flick).toFixed(3) + ')';
+            g.beginPath();
+            g.arc(CX, CY, core * 1.8, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = 'rgba(255,255,255,' + (0.92 * flick).toFixed(3) + ')';
+            g.beginPath();
+            g.arc(CX, CY, core, 0, Math.PI * 2);
+            g.fill();
+            g.strokeStyle = 'rgba(210,240,255,' + (0.5 * flick).toFixed(3) + ')';
+            g.lineWidth = 1.4;
+            g.beginPath();
+            g.moveTo(CX - core * 6, CY);
+            g.lineTo(CX + core * 6, CY);
+            g.moveTo(CX, CY - core * 4);
+            g.lineTo(CX, CY + core * 4);
             g.stroke();
-          }
-
-          if (t >= EXIT_AT) {
-            const e = t - EXIT_AT;
-            for (let k = 0; k < 3; k += 1) {
-              const rr = 30 + e * (0.9 + k * 0.25);
-              g.strokeStyle = 'rgba(200,235,255,' + clamp(0.5 - e / 1400, 0, 0.5).toFixed(3) + ')';
+            if (crit > 0.02) {
+              g.strokeStyle = 'rgba(255,92,122,' + (crit * 0.4).toFixed(3) + ')';
               g.lineWidth = 2;
               g.beginPath();
-              g.arc(CX, CY, rr, 0, Math.PI * 2);
+              g.arc(CX, CY, core * 2.6 + Math.sin(t * 0.03) * 6, 0, Math.PI * 2);
               g.stroke();
             }
-            g.fillStyle = 'rgba(255,255,255,' + clamp(0.85 - e / 420, 0, 0.85).toFixed(3) + ')';
-            g.beginPath();
-            g.arc(CX, CY, 60 * Math.max(0, 1 - e / 420), 0, Math.PI * 2);
-            g.fill();
+          } else {
+            const e = t - BOOM_AT;
+
+            if (e < 560) {
+              const rad = 30 + e * 1.1;
+              const grad = g.createRadialGradient(CX, CY, 0, CX, CY, rad);
+              const a = 1 - e / 560;
+              grad.addColorStop(0, 'rgba(255,255,255,' + (0.95 * a).toFixed(3) + ')');
+              grad.addColorStop(0.45, 'rgba(150,220,255,' + (0.55 * a).toFixed(3) + ')');
+              grad.addColorStop(1, 'rgba(77,107,254,0)');
+              g.fillStyle = grad;
+              g.beginPath();
+              g.arc(CX, CY, rad, 0, Math.PI * 2);
+              g.fill();
+            }
+
+            if (e < 950) {
+              const a = (1 - e / 950) * 0.16;
+              const len = MAXR * (0.45 + 0.55 * smooth(0, 900, e));
+              g.fillStyle = 'rgba(190,225,255,' + a.toFixed(3) + ')';
+              for (let i = 0; i < 22; i += 1) {
+                const ang = (i / 22) * Math.PI * 2 + e * 0.0004;
+                g.beginPath();
+                g.moveTo(CX, CY);
+                g.lineTo(CX + Math.cos(ang - 0.014) * len, CY + Math.sin(ang - 0.014) * len);
+                g.lineTo(CX + Math.cos(ang + 0.014) * len, CY + Math.sin(ang + 0.014) * len);
+                g.closePath();
+                g.fill();
+              }
+            }
+
+            if (e < 1500) {
+              const rings = [
+                [1.05, 'rgba(235,244,255,', 3],
+                [1.4, 'rgba(53,230,255,', 2],
+                [1.75, 'rgba(255,62,165,', 1.4],
+              ];
+              for (let k = 0; k < rings.length; k += 1) {
+                const rr = 20 + e * rings[k][0];
+                const a = clamp(0.55 - e / 1500, 0, 0.55);
+                g.strokeStyle = rings[k][1] + a.toFixed(3) + ')';
+                g.lineWidth = rings[k][2];
+                g.beginPath();
+                g.arc(CX, CY, rr, 0, Math.PI * 2);
+                g.stroke();
+              }
+            }
+
+            for (let i = 0; i < debris.length; i += 1) {
+              const p = debris[i];
+              const a = clamp(p.life / 700, 0, 1) * 0.9;
+              g.strokeStyle = 'rgba(' + p.c[0] + ',' + p.c[1] + ',' + p.c[2] + ',' + a.toFixed(3) + ')';
+              g.lineWidth = p.w;
+              g.beginPath();
+              g.moveTo(p.x - p.vx * 10, p.y - p.vy * 10);
+              g.lineTo(p.x, p.y);
+              g.stroke();
+            }
+
+            for (let i = 0; i < embers.length; i += 1) {
+              const p = embers[i];
+              const a = clamp(p.life / 1200, 0, 1) * (0.42 + 0.42 * Math.sin(p.p + t * 0.02));
+              if (a <= 0.02) continue;
+              g.fillStyle = 'rgba(' + p.c[0] + ',' + p.c[1] + ',' + p.c[2] + ',' + a.toFixed(3) + ')';
+              g.beginPath();
+              g.arc(p.x, p.y, p.w, 0, Math.PI * 2);
+              g.fill();
+            }
+
+            if (t >= EXIT_AT) {
+              const ramp = 1 + smooth(EXIT_AT, EXIT_AT + 450, t) * 9;
+              for (let i = 0; i < jump.length; i += 1) {
+                const s = jump[i];
+                const len = 26 + ramp * 26;
+                const r0 = Math.max(1, s.r - len);
+                const ca = Math.cos(s.a);
+                const sa = Math.sin(s.a);
+                const a = 0.18 + clamp(s.r / MAXR, 0, 1) * 0.7;
+                g.strokeStyle = 'rgba(' + s.c[0] + ',' + s.c[1] + ',' + s.c[2] + ',' + a.toFixed(3) + ')';
+                g.lineWidth = s.w;
+                g.beginPath();
+                g.moveTo(CX + ca * r0, CY + sa * r0);
+                g.lineTo(CX + ca * s.r, CY + sa * s.r);
+                g.stroke();
+              }
+              const fade = clamp(1 - (t - EXIT_AT) / 400, 0, 1);
+              if (fade > 0.02) {
+                g.fillStyle = 'rgba(255,255,255,' + (0.7 * fade).toFixed(3) + ')';
+                g.beginPath();
+                g.arc(CX, CY, 46 * fade + 6, 0, Math.PI * 2);
+                g.fill();
+              }
+            }
           }
 
           g.globalCompositeOperation = 'source-over';
@@ -766,7 +1042,7 @@ window.__ModuleLoader__.load({
           dtSafe = dt;
           step(dt, t);
           paint(t, dt);
-          if (t < EXIT_AT + 1200) {
+          if (t < EXIT_AT + 800) {
             frame = window.requestAnimationFrame(loop);
           }
         };
@@ -783,8 +1059,8 @@ window.__ModuleLoader__.load({
         last = performance.now();
 
         if (reduced) {
-          step(16, 1400);
-          paint(1400, 16);
+          for (let tt = 0; tt <= 2800; tt += 50) step(50, tt);
+          paint(2800, 16);
         } else {
           frame = window.requestAnimationFrame(loop);
         }
@@ -807,30 +1083,40 @@ window.__ModuleLoader__.load({
       const t = props.t;
       const reduced = React.useMemo(prefersReducedMotion, []);
       const offset = React.useMemo(prebootOffset, []);
-      const continuing = offset > 0;
-      const [phase, setPhase] = React.useState('in');
-      const [alive, setAlive] = React.useState(true);
-      const [ro, setRo] = React.useState(() => {
-        const pct = percentAt(offset);
-        return {
-          pct,
-          clock: clockAt(offset),
-          hex: hexAt(offset),
-          hud: hudAt(offset, pct),
-          key: phaseKeyAt(offset, pct),
-        };
+      const late = offset >= 600;
+      const lateBoom = offset >= BOOM_AT;
+      const [phase, setPhase] = React.useState(() => {
+        if (lateBoom) return 'boom';
+        if (offset >= CHARGE_END) return 'crit';
+        return 'charge';
       });
+      const [boomed, setBoomed] = React.useState(lateBoom);
+      const [alive, setAlive] = React.useState(true);
+      const [ro, setRo] = React.useState(() => readoutAt(offset));
 
       const skip = React.useCallback(() => {
         setPhase('out');
       }, []);
 
       React.useEffect(() => {
-        const timer = window.setTimeout(
-          () => setPhase('out'),
-          reduced ? 1400 : Math.max(0, EXIT_AT - offset),
-        );
-        return () => window.clearTimeout(timer);
+        const timers = [];
+        const detonate = () => {
+          setBoomed(true);
+          setPhase('boom');
+        };
+        if (reduced) {
+          timers.push(window.setTimeout(detonate, 60));
+          timers.push(window.setTimeout(() => setPhase('out'), 1400));
+        } else {
+          if (offset < CHARGE_END) {
+            timers.push(window.setTimeout(() => setPhase('crit'), CHARGE_END - offset));
+          }
+          if (offset < BOOM_AT) {
+            timers.push(window.setTimeout(detonate, BOOM_AT - offset));
+          }
+          timers.push(window.setTimeout(() => setPhase('out'), Math.max(0, EXIT_AT - offset)));
+        }
+        return () => timers.forEach((id) => window.clearTimeout(id));
       }, [reduced, offset]);
 
       React.useEffect(() => {
@@ -841,23 +1127,15 @@ window.__ModuleLoader__.load({
 
       React.useEffect(() => {
         if (reduced) {
-          setRo({ pct: 100, clock: '00:01.400', hex: hexAt(1400), hud: 'READY', key: 'phaseReady' });
+          setRo({ pct: 100, clock: '00:02.800', hex: hexAt(2800), hud: 'ONLINE', key: 'phaseOnline' });
           return undefined;
         }
         const startedAt = performance.now() - offset;
         const timer = window.setInterval(() => {
-          const elapsed = performance.now() - startedAt;
-          const pct = percentAt(elapsed);
-          setRo({
-            pct,
-            clock: clockAt(elapsed),
-            hex: hexAt(elapsed),
-            hud: hudAt(elapsed, pct),
-            key: phaseKeyAt(elapsed, pct),
-          });
+          setRo(readoutAt(performance.now() - startedAt));
         }, 80);
         return () => window.clearInterval(timer);
-      }, [reduced]);
+      }, [reduced, offset]);
 
       React.useEffect(() => {
         const onKeyDown = (event) => {
@@ -869,82 +1147,92 @@ window.__ModuleLoader__.load({
 
       if (!alive) return null;
 
+      const className = 'dsh-splash'
+        + (late ? ' dsh-splash-late' : '')
+        + (lateBoom ? ' dsh-splash-boomdone' : '')
+        + (boomed ? ' dsh-splash-boom' : '')
+        + (phase === 'crit' ? ' dsh-splash-crit' : '')
+        + (phase === 'out' ? ' dsh-splash-out' : '');
+
       return h('div', {
-        className: 'dsh-splash' + (continuing ? ' dsh-splash-continue' : '') + (phase === 'out' ? ' dsh-splash-out' : ''),
+        className,
         role: 'status',
         'aria-live': 'polite',
         'aria-label': t('loading'),
         onClick: skip,
       },
         h('style', { key: 'style' }, STYLE),
-        h(Warp, { key: 'warp', offset }),
+        h('div', { key: 'frame', className: 'dsh-frame' },
+          h(Supernova, { key: 'canvas', offset }),
 
-        h('div', { key: 'aurora-a', className: 'dsh-aurora dsh-aurora-a', 'aria-hidden': true }),
-        h('div', { key: 'aurora-b', className: 'dsh-aurora dsh-aurora-b', 'aria-hidden': true }),
-        h('div', { key: 'aurora-c', className: 'dsh-aurora dsh-aurora-c', 'aria-hidden': true }),
-        h('div', { key: 'rays', className: 'dsh-rays', 'aria-hidden': true }),
-        h('div', { key: 'glow', className: 'dsh-glow', 'aria-hidden': true }),
-        h('div', { key: 'flare', className: 'dsh-flare', 'aria-hidden': true }),
-        h('div', { key: 'flare-v', className: 'dsh-flare-v', 'aria-hidden': true }),
+          h('div', { key: 'aurora-a', className: 'dsh-aurora dsh-aurora-a', 'aria-hidden': true }),
+          h('div', { key: 'aurora-b', className: 'dsh-aurora dsh-aurora-b', 'aria-hidden': true }),
+          h('div', { key: 'aurora-c', className: 'dsh-aurora dsh-aurora-c', 'aria-hidden': true }),
+          h('div', { key: 'rays', className: 'dsh-rays', 'aria-hidden': true }),
+          h('div', { key: 'glow', className: 'dsh-glow', 'aria-hidden': true }),
+          h('div', { key: 'crit', className: 'dsh-crit', 'aria-hidden': true }),
+          h('div', { key: 'flare', className: 'dsh-flare', 'aria-hidden': true }),
+          h('div', { key: 'flare-v', className: 'dsh-flare-v', 'aria-hidden': true }),
 
-        h('div', { key: 'hud', className: 'dsh-hud', 'aria-hidden': true },
-          h('div', { key: 'tl', className: 'dsh-hud-tl' },
-            'DSH ', h('span', { className: 'dsh-hud-cyan' }, '//'), ' HYPERDRIVE BOOT ',
-            h('b', null, 'v' + VERSION),
+          h('div', { key: 'hud', className: 'dsh-hud', 'aria-hidden': true },
+            h('div', { key: 'tl', className: 'dsh-hud-tl' },
+              'DSH ', h('span', { className: 'dsh-hud-cyan' }, '//'), ' SUPERNOVA BOOT ',
+              h('b', null, 'v' + VERSION),
+            ),
+            h('div', { key: 'tr', className: 'dsh-hud-tr' }, 'T+', h('span', null, ro.clock)),
+            h('div', { key: 'bl', className: 'dsh-hud-bl' },
+              'NODE ', h('b', null, 'SHA-01'), ' · ', h('span', null, ro.hex),
+            ),
+            h('div', { key: 'br', className: 'dsh-hud-br' },
+              h('span', null, ro.hud), ' · SYNC',
+            ),
           ),
-          h('div', { key: 'tr', className: 'dsh-hud-tr' }, 'T+', h('span', null, ro.clock)),
-          h('div', { key: 'bl', className: 'dsh-hud-bl' },
-            'NODE ', h('b', null, 'SHA-01'), ' · ', h('span', null, ro.hex),
+
+          h('div', { key: 'corner-tl', className: 'dsh-corner dsh-corner-tl', 'aria-hidden': true }),
+          h('div', { key: 'corner-tr', className: 'dsh-corner dsh-corner-tr', 'aria-hidden': true }),
+          h('div', { key: 'corner-bl', className: 'dsh-corner dsh-corner-bl', 'aria-hidden': true }),
+          h('div', { key: 'corner-br', className: 'dsh-corner dsh-corner-br', 'aria-hidden': true }),
+
+          h('div', { key: 'side-l', className: 'dsh-side dsh-side-l', 'aria-hidden': true }, 'DEEPSEEK HARNESS'),
+          h('div', { key: 'side-r', className: 'dsh-side dsh-side-r', 'aria-hidden': true }, 'SUPERNOVA · BUILD 2026.10'),
+
+          h('div', { key: 'stage', className: 'dsh-stage', 'aria-hidden': true },
+            h('div', { key: 'kicker', className: 'dsh-kicker' },
+              h('i', { key: 'dot' }),
+              t('kicker'),
+            ),
+            h('h1', { key: 'title', className: 'dsh-title' },
+              h('span', { key: 'l1', className: 'dsh-line dsh-line-1', 'data-text': 'DEEPSEEK' }, 'DEEPSEEK'),
+              h('span', { key: 'l2', className: 'dsh-line dsh-line-2', 'data-text': 'HARNESS' }, 'HARNESS'),
+            ),
+            h('div', { key: 'sub', className: 'dsh-sub' }, t('sub')),
+            h('div', { key: 'meter', className: 'dsh-meter' },
+              h('div', { key: 'row', className: 'dsh-meter-row' },
+                h('span', { key: 'phase' }, t(ro.key)),
+                h('span', { key: 'pct', className: 'dsh-pct' }, ro.pct + '%'),
+              ),
+              h('div', { key: 'track', className: 'dsh-track' },
+                h('span', { key: 'fill', className: 'dsh-fill', style: { width: ro.pct + '%' } }),
+              ),
+              h('div', { key: 'ticks', className: 'dsh-ticks' },
+                h('span', { key: 't0' }, '00'),
+                h('span', { key: 't1' }, '25'),
+                h('span', { key: 't2' }, '50'),
+                h('span', { key: 't3' }, '75'),
+                h('span', { key: 't4' }, '100'),
+              ),
+            ),
           ),
-          h('div', { key: 'br', className: 'dsh-hud-br' },
-            h('span', null, ro.hud), ' · SYNC',
-          ),
+
+          h('div', { key: 'scanlines', className: 'dsh-scanlines', 'aria-hidden': true }),
+          h('div', { key: 'scan', className: 'dsh-scan', 'aria-hidden': true }),
+          h('div', { key: 'vignette', className: 'dsh-vignette', 'aria-hidden': true }),
+
+          h('div', { key: 'flash', className: 'dsh-flash', 'aria-hidden': true }),
+          h('div', { key: 'shock-1', className: 'dsh-shock dsh-shock-1', 'aria-hidden': true }),
+          h('div', { key: 'shock-2', className: 'dsh-shock dsh-shock-2', 'aria-hidden': true }),
+          h('div', { key: 'shock-3', className: 'dsh-shock dsh-shock-3', 'aria-hidden': true }),
         ),
-
-        h('div', { key: 'corner-tl', className: 'dsh-corner dsh-corner-tl', 'aria-hidden': true }),
-        h('div', { key: 'corner-tr', className: 'dsh-corner dsh-corner-tr', 'aria-hidden': true }),
-        h('div', { key: 'corner-bl', className: 'dsh-corner dsh-corner-bl', 'aria-hidden': true }),
-        h('div', { key: 'corner-br', className: 'dsh-corner dsh-corner-br', 'aria-hidden': true }),
-
-        h('div', { key: 'side-l', className: 'dsh-side dsh-side-l', 'aria-hidden': true }, 'DEEPSEEK HARNESS'),
-        h('div', { key: 'side-r', className: 'dsh-side dsh-side-r', 'aria-hidden': true }, 'HYPERSPACE · BUILD 2026.10'),
-
-        h('div', { key: 'stage', className: 'dsh-stage', 'aria-hidden': true },
-          h('div', { key: 'kicker', className: 'dsh-kicker' },
-            h('i', { key: 'dot' }),
-            t('kicker'),
-          ),
-          h('h1', { key: 'title', className: 'dsh-title' },
-            h('span', { key: 'l1', className: 'dsh-line dsh-line-1', 'data-text': 'DEEPSEEK' }, 'DEEPSEEK'),
-            h('span', { key: 'l2', className: 'dsh-line dsh-line-2', 'data-text': 'HARNESS' }, 'HARNESS'),
-          ),
-          h('div', { key: 'sub', className: 'dsh-sub' }, t('sub')),
-          h('div', { key: 'meter', className: 'dsh-meter' },
-            h('div', { key: 'row', className: 'dsh-meter-row' },
-              h('span', { key: 'phase' }, t(ro.key)),
-              h('span', { key: 'pct', className: 'dsh-pct' }, ro.pct + '%'),
-            ),
-            h('div', { key: 'track', className: 'dsh-track' },
-              h('span', { key: 'fill', className: 'dsh-fill', style: { width: ro.pct + '%' } }),
-            ),
-            h('div', { key: 'ticks', className: 'dsh-ticks' },
-              h('span', { key: 't0' }, '00'),
-              h('span', { key: 't1' }, '25'),
-              h('span', { key: 't2' }, '50'),
-              h('span', { key: 't3' }, '75'),
-              h('span', { key: 't4' }, '100'),
-            ),
-          ),
-        ),
-
-        h('div', { key: 'scanlines', className: 'dsh-scanlines', 'aria-hidden': true }),
-        h('div', { key: 'scan', className: 'dsh-scan', 'aria-hidden': true }),
-        h('div', { key: 'vignette', className: 'dsh-vignette', 'aria-hidden': true }),
-
-        h('div', { key: 'flash', className: 'dsh-flash', 'aria-hidden': true }),
-        h('div', { key: 'shock-1', className: 'dsh-shock dsh-shock-1', 'aria-hidden': true }),
-        h('div', { key: 'shock-2', className: 'dsh-shock dsh-shock-2', 'aria-hidden': true }),
-        h('div', { key: 'shock-3', className: 'dsh-shock dsh-shock-3', 'aria-hidden': true }),
 
         h('button', {
           key: 'skip',
