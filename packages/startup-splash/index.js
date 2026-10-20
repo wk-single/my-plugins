@@ -14,7 +14,7 @@
  * `.dsh-splash` mounts (or after a safety timeout).
  */
 
-const PREBOOT_HTML = `
+const PREBOOT_MARKUP = `
 <div id="dsh-preboot" aria-hidden="true">
   <canvas id="pb-warp"></canvas>
   <div class="pb-au pb-a"></div>
@@ -22,7 +22,7 @@ const PREBOOT_HTML = `
   <div class="pb-au pb-c"></div>
   <div class="pb-rays"></div>
   <div class="pb-glow"></div>
-  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> HYPERDRIVE BOOT <b>v2.1.0</b></div>
+  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> HYPERDRIVE BOOT <b>v2.1.1</b></div>
   <div class="pb-hud pb-tr">T+<span id="pb-clock">00:00.000</span></div>
   <div class="pb-hud pb-bl">NODE <b>SHA-01</b> · <span id="pb-hex">0x000000</span></div>
   <div class="pb-hud pb-br"><span id="pb-phase">IGNITION</span> · SYNC</div>
@@ -96,12 +96,13 @@ body:has(.dsh-splash) #dsh-preboot{visibility:hidden;opacity:0}
 @keyframes pb-drift-c{from{transform:translate3d(-3vmax,5vmax,0) scale(.96)}to{transform:translate3d(7vmax,-6vmax,0) scale(1.2)}}
 @media (prefers-reduced-motion:reduce){#dsh-preboot *,#dsh-preboot *::before,#dsh-preboot *::after{animation-duration:1ms!important;animation-iteration-count:1!important}}
 </style>
-<script>
-(function () {
+`;
+
+const PREBOOT_BODY = `(function () {
   var root = document.getElementById('dsh-preboot');
   if (!root) return;
   var startedAt = performance.now();
-  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '2.1.0' };
+  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '2.1.1' };
 
   var zh = (navigator.language || '').toLowerCase().indexOf('zh') === 0;
   var LABELS = zh ? ['初始化核心', '校准光学', '链接模块', '超空间就绪'] : ['Initializing core', 'Calibrating optics', 'Linking modules', 'Hyperspace ready'];
@@ -238,25 +239,36 @@ body:has(.dsh-splash) #dsh-preboot{visibility:hidden;opacity:0}
   }, 80);
   setTimeout(remove, 15000);
 })();
-</script>
 `;
 
-/** Insert the pre-boot splash right after `<body>` (or append when absent). */
-export function transformIndex(html) {
-  if (typeof html !== 'string' || html.indexOf('id="dsh-preboot"') !== -1) return html;
-  if (/<body[^>]*>/i.test(html)) {
-    return html.replace(/<body([^>]*)>/i, function (match, attrs) {
-      return '<body' + attrs + '>' + PREBOOT_HTML;
-    });
+/**
+ * Boot-injection script.
+ *
+ * The Desktop shell serves its page from `dsh-app://app/` (the packaged static
+ * frontend), so `webServer.tapIndex` never reaches it. Both the Desktop shell
+ * and the browser index consume `webserver/index-inject` rows instead: this row
+ * paints the pre-boot layer at boot - before the client modules load.
+ */
+export const PREBOOT_SCRIPT = `(function () {
+  if (document.getElementById('dsh-preboot')) return;
+  var holder = document.createElement('div');
+  holder.innerHTML = ${JSON.stringify(PREBOOT_MARKUP)};
+  var parent = document.body || document.documentElement;
+  while (holder.firstChild) parent.appendChild(holder.firstChild);
+  ${PREBOOT_BODY}
+  if (!document.body) {
+    document.addEventListener('DOMContentLoaded', function () {
+      var node = document.getElementById('dsh-preboot');
+      if (node && node.parentNode !== document.body) document.body.appendChild(node);
+    }, { once: true });
   }
-  return html + PREBOOT_HTML;
-}
+})();`;
 
 export function apply(ctx) {
-  ctx.inject(['webServer'], (webCtx) => {
-    webCtx.effect(
-      () => webCtx.webServer.tapIndex(transformIndex),
-      'startup-splash: pre-boot index tap',
-    );
-  });
+  ctx.effect(
+    () => ctx.on('webserver/index-inject', (table) => {
+      table.push({ kind: 'script', placement: 'head', text: PREBOOT_SCRIPT });
+    }),
+    'startup-splash: pre-boot boot injection',
+  );
 }

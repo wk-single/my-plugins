@@ -21,7 +21,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'dsh-startup-splash';
-    const VERSION = '2.1.0';
+    const VERSION = '2.1.1';
     const EXIT_AT = 3050;
     const LINGER = 980;
 

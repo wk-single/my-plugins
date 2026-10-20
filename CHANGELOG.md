@@ -6,6 +6,17 @@
 
 ## [Unreleased]
 
+## [startup-splash 2.1.1] - 2026-10-20
+
+### Fixed
+
+- 桌面端不消费 `webServer.tapIndex`：改为通过 `webserver/index-inject` 的启动注入绘制预启动层，`dsh-app://` 页面与浏览器 index 都会生效。
+- 预启动层与 React splash 的标记、样式相互独立，避免作用域冲突。
+
+### Changed
+
+- 版本号更新为 2.1.1（HUD 与预启动层同步显示）。
+
 ## [startup-splash 2.1.0] - 2026-10-20
 
 ### Added

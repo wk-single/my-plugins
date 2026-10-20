@@ -10,7 +10,7 @@
 
 | 插件 | 版本 | 说明 |
 | --- | --- | --- |
-| [Startup Splash](packages/startup-splash) | 2.1.0 | 首帧即启动：预启动层 + 曲速隧道、粒子爆发、故障字标与 HUD |
+| [Startup Splash](packages/startup-splash) | 2.1.1 | 首帧即启动：预启动层 + 曲速隧道、粒子爆发、故障字标与 HUD |
 
 ## 安装
 
