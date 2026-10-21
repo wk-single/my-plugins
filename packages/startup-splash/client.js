@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement;
 
     const NS = 'dsh-startup-splash';
-    const VERSION = '3.0.1';
+    const VERSION = '3.0.2';
     const CHARGE_END = 1500;
     const BOOM_AT = 2000;
     const EXIT_AT = 3600;
@@ -449,7 +449,11 @@ window.__ModuleLoader__.load({
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(circle at 50% 46%, #ffffff 0%, rgba(210, 235, 255, .9) 26%, rgba(120, 180, 255, 0) 66%);
+  background: radial-gradient(circle at 50% 46%,
+    rgba(255, 255, 255, .92) 0%,
+    rgba(255, 214, 150, .55) 12%,
+    rgba(140, 205, 255, .22) 34%,
+    rgba(90, 140, 255, 0) 66%);
   mix-blend-mode: screen;
 }
 .dsh-shock {
@@ -466,7 +470,7 @@ window.__ModuleLoader__.load({
 .dsh-shock-2 { border-color: rgba(53, 230, 255, .65); border-width: 3px; }
 .dsh-shock-3 { border-color: rgba(255, 62, 165, .5); border-width: 1px; }
 
-.dsh-splash-boom .dsh-flash { animation: dsh-flash 760ms ease-out both; }
+.dsh-splash-boom .dsh-flash { animation: dsh-flash 560ms ease-out both; }
 .dsh-splash-boom .dsh-shock { animation: dsh-shock 950ms cubic-bezier(.16, .8, .24, 1) both; }
 .dsh-splash-boom .dsh-shock-2 { animation-delay: 90ms; }
 .dsh-splash-boom .dsh-shock-3 { animation-delay: 180ms; }
@@ -568,7 +572,7 @@ window.__ModuleLoader__.load({
 }
 @keyframes dsh-flash {
   0% { opacity: 0; }
-  14% { opacity: 1; }
+  9% { opacity: .58; }
   100% { opacity: 0; }
 }
 @keyframes dsh-shock {
@@ -941,11 +945,12 @@ window.__ModuleLoader__.load({
             const e = t - BOOM_AT;
 
             if (e < 560) {
-              const rad = 30 + e * 1.1;
+              const rad = Math.min(30 + e * 1.1, Math.min(W * 0.34, H * 0.42));
               const grad = g.createRadialGradient(CX, CY, 0, CX, CY, rad);
               const a = 1 - e / 560;
-              grad.addColorStop(0, 'rgba(255,255,255,' + (0.95 * a).toFixed(3) + ')');
-              grad.addColorStop(0.45, 'rgba(150,220,255,' + (0.55 * a).toFixed(3) + ')');
+              grad.addColorStop(0, 'rgba(255,255,255,' + (0.5 * a).toFixed(3) + ')');
+              grad.addColorStop(0.3, 'rgba(255,206,150,' + (0.38 * a).toFixed(3) + ')');
+              grad.addColorStop(0.62, 'rgba(140,205,255,' + (0.18 * a).toFixed(3) + ')');
               grad.addColorStop(1, 'rgba(77,107,254,0)');
               g.fillStyle = grad;
               g.beginPath();
@@ -954,7 +959,7 @@ window.__ModuleLoader__.load({
             }
 
             if (e < 950) {
-              const a = (1 - e / 950) * 0.16;
+              const a = (1 - e / 950) * 0.08;
               const len = MAXR * (0.45 + 0.55 * smooth(0, 900, e));
               g.fillStyle = 'rgba(190,225,255,' + a.toFixed(3) + ')';
               for (let i = 0; i < 22; i += 1) {
@@ -1024,7 +1029,7 @@ window.__ModuleLoader__.load({
               }
               const fade = clamp(1 - (t - EXIT_AT) / 400, 0, 1);
               if (fade > 0.02) {
-                g.fillStyle = 'rgba(255,255,255,' + (0.7 * fade).toFixed(3) + ')';
+                g.fillStyle = 'rgba(255,255,255,' + (0.28 * fade).toFixed(3) + ')';
                 g.beginPath();
                 g.arc(CX, CY, 46 * fade + 6, 0, Math.PI * 2);
                 g.fill();
@@ -1160,6 +1165,14 @@ window.__ModuleLoader__.load({
         'aria-live': 'polite',
         'aria-label': t('loading'),
         onClick: skip,
+        style: {
+          position: 'fixed',
+          inset: 0,
+          zIndex: 2147483000,
+          overflow: 'hidden',
+          background: 'radial-gradient(120% 92% at 50% 44%, #0b1230 0%, #070a18 46%, #04050a 100%)',
+          colorScheme: 'dark',
+        },
       },
         h('style', { key: 'style' }, STYLE),
         h('div', { key: 'frame', className: 'dsh-frame' },

@@ -23,7 +23,7 @@ const PREBOOT_MARKUP = `
   <div class="pb-rays"></div>
   <div class="pb-glow"></div>
   <div class="pb-crit"></div>
-  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> SUPERNOVA BOOT <b>v3.0.1</b></div>
+  <div class="pb-hud pb-tl">DSH <span class="pb-cy">//</span> SUPERNOVA BOOT <b>v3.0.2</b></div>
   <div class="pb-hud pb-tr">T+<span id="pb-clock">00:00.000</span></div>
   <div class="pb-hud pb-bl">NODE <b>SHA-01</b> · <span id="pb-hex">0x000000</span></div>
   <div class="pb-hud pb-br"><span id="pb-phase">CHARGE</span> · SYNC</div>
@@ -49,7 +49,8 @@ const PREBOOT_MARKUP = `
 </div>
 <style>
 #dsh-preboot{position:fixed;inset:0;width:100vw;height:100vh;z-index:2147482000;overflow:hidden;pointer-events:none;user-select:none;color:#f5f8ff;background:radial-gradient(120% 92% at 50% 44%,#0b1230 0%,#070a18 46%,#04050a 100%);font-family:"Segoe UI",Inter,ui-sans-serif,system-ui,"Microsoft YaHei",sans-serif;color-scheme:dark;animation:pb-hide 1ms linear 12s forwards}
-body:has(.dsh-splash) #dsh-preboot{visibility:hidden;opacity:0}
+html:has(#dsh-preboot),body:has(#dsh-preboot){background:#0b1230!important;color-scheme:dark}
+html:has(#dsh-preboot) [data-dsh-boot]{visibility:hidden}
 #dsh-preboot canvas{position:absolute;inset:0;width:100%;height:100%}
 #dsh-preboot .pb-au{position:absolute;border-radius:50%;mix-blend-mode:screen;will-change:transform}
 #dsh-preboot .pb-a{width:120vmax;height:86vmax;left:-40vmax;top:-36vmax;background:radial-gradient(closest-side,rgba(70,104,255,.34) 0%,rgba(70,104,255,0) 70%);animation:pb-drift-a 10s ease-in-out infinite alternate}
@@ -58,7 +59,7 @@ body:has(.dsh-splash) #dsh-preboot{visibility:hidden;opacity:0}
 #dsh-preboot .pb-rays{position:absolute;left:50%;top:46%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;opacity:.22;background:repeating-conic-gradient(from 0deg,rgba(150,190,255,.16) 0deg 1deg,transparent 1deg 14deg);-webkit-mask:radial-gradient(closest-side,transparent 4%,#000 34%,transparent 82%);mask:radial-gradient(closest-side,transparent 4%,#000 34%,transparent 82%);animation:pb-spin 90s linear infinite;mix-blend-mode:screen}
 #dsh-preboot .pb-glow{position:absolute;left:50%;top:46%;width:min(76vw,980px);height:min(50vw,620px);transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(77,107,254,.30) 0%,rgba(53,230,255,.10) 46%,transparent 74%);filter:blur(14px);animation:pb-glow 2600ms ease-in-out infinite alternate}
 #dsh-preboot .pb-crit{position:absolute;inset:0;opacity:0;background:radial-gradient(118% 92% at 50% 46%,transparent 42%,rgba(255,62,120,.16) 74%,rgba(255,92,60,.34) 100%);mix-blend-mode:screen;animation:pb-crit 420ms ease-in-out 1500ms 2 both}
-#dsh-preboot .pb-flash{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 46%,#ffffff 0%,rgba(210,235,255,.9) 26%,rgba(120,180,255,0) 66%);mix-blend-mode:screen;animation:pb-flash 760ms ease-out 2000ms both}
+#dsh-preboot .pb-flash{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 46%,rgba(255,255,255,.92) 0%,rgba(255,214,150,.55) 12%,rgba(140,205,255,.22) 34%,rgba(90,140,255,0) 66%);mix-blend-mode:screen;animation:pb-flash 560ms ease-out 2000ms both}
 #dsh-preboot .pb-stage{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;text-align:center;width:min(92vw,1100px)}
 #dsh-preboot .pb-kicker{display:inline-flex;align-items:center;gap:10px;margin-bottom:clamp(16px,2.4vh,28px);font-family:ui-monospace,Consolas,"SFMono-Regular",monospace;font-size:clamp(10px,1vw,13px);letter-spacing:.42em;text-transform:uppercase;color:rgba(186,208,255,.72)}
 #dsh-preboot .pb-kicker i{width:7px;height:7px;border-radius:50%;background:#35e6ff;box-shadow:0 0 12px 2px rgba(53,230,255,.85);animation:pb-blink 900ms steps(2,jump-none) infinite}
@@ -96,7 +97,7 @@ body:has(.dsh-splash) #dsh-preboot{visibility:hidden;opacity:0}
 @keyframes pb-blink{0%,49%{opacity:1}50%,100%{opacity:.15}}
 @keyframes pb-glow{from{opacity:.55;transform:translate(-50%,-50%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
 @keyframes pb-crit{0%,100%{opacity:.35}50%{opacity:.95}}
-@keyframes pb-flash{0%{opacity:0}14%{opacity:1}100%{opacity:0}}
+@keyframes pb-flash{0%{opacity:0}9%{opacity:.58}100%{opacity:0}}
 @keyframes pb-slam{0%{opacity:0;transform:scale(2.6);filter:blur(18px)}55%{opacity:1;filter:blur(0)}72%{transform:scale(.985)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
 @keyframes pb-drift-a{from{transform:translate3d(-4vmax,-3vmax,0) scale(1)}to{transform:translate3d(8vmax,6vmax,0) scale(1.18)}}
 @keyframes pb-drift-b{from{transform:translate3d(4vmax,4vmax,0) scale(1.12)}to{transform:translate3d(-8vmax,-5vmax,0) scale(.94)}}
@@ -109,7 +110,7 @@ const PREBOOT_BODY = `(function () {
   var root = document.getElementById('dsh-preboot');
   if (!root) return;
   var startedAt = performance.now();
-  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '3.0.1' };
+  window.__DSH_SPLASH_PREBOOT__ = { startedAt: startedAt, version: '3.0.2' };
 
   var CHARGE_END = 1500;
   var BOOM_AT = 2000;
@@ -330,17 +331,18 @@ const PREBOOT_BODY = `(function () {
     } else {
       var e = t - BOOM_AT;
       if (e < 560) {
-        var fr = 30 + e * 1.1;
+        var fr = Math.min(30 + e * 1.1, Math.min(W * 0.34, H * 0.42));
         var grad = g.createRadialGradient(CX, CY, 0, CX, CY, fr);
         var fa = 1 - e / 560;
-        grad.addColorStop(0, 'rgba(255,255,255,' + (0.95 * fa).toFixed(3) + ')');
-        grad.addColorStop(0.45, 'rgba(150,220,255,' + (0.55 * fa).toFixed(3) + ')');
+        grad.addColorStop(0, 'rgba(255,255,255,' + (0.5 * fa).toFixed(3) + ')');
+        grad.addColorStop(0.3, 'rgba(255,206,150,' + (0.38 * fa).toFixed(3) + ')');
+        grad.addColorStop(0.62, 'rgba(140,205,255,' + (0.18 * fa).toFixed(3) + ')');
         grad.addColorStop(1, 'rgba(77,107,254,0)');
         g.fillStyle = grad;
         g.beginPath(); g.arc(CX, CY, fr, 0, Math.PI * 2); g.fill();
       }
       if (e < 950) {
-        var ga = (1 - e / 950) * 0.16;
+        var ga = (1 - e / 950) * 0.08;
         var glen = MAXR * (0.45 + 0.55 * smooth(0, 900, e));
         g.fillStyle = 'rgba(190,225,255,' + ga.toFixed(3) + ')';
         for (i = 0; i < 22; i += 1) {
@@ -427,7 +429,13 @@ const PREBOOT_BODY = `(function () {
   var watch = setInterval(function () {
     if (document.querySelector('.dsh-splash')) {
       clearInterval(watch);
-      setTimeout(remove, 140);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          root.style.visibility = 'hidden';
+          root.style.opacity = '0';
+          setTimeout(remove, 140);
+        });
+      });
     }
   }, 80);
   setTimeout(remove, 15000);

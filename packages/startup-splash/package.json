@@ -1,6 +1,6 @@
 {
   "name": "@local/dsh-startup-splash",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "private": true,
   "type": "module",
   "description": "Cinematic startup sequence for the DeepSeek Harness Web UI: a first-paint pre-boot splash plus a supernova ignition, critical overload, detonation burst, glitching wordmark and HUD.",
